@@ -1,5 +1,5 @@
-import asyncio
-import pprint
+import datetime
+import textwrap
 import time
 from dataclasses import dataclass
 
@@ -17,7 +17,7 @@ class MenuItem:
 
 
 class Olivka:
-    def __init__(self):
+    def __init__(self) -> None:
         self.week: list[list[MenuItem]] | None = None
         self.last_update: float | None = None
 
@@ -43,12 +43,18 @@ class Olivka:
             week.append(items)
         return week
 
+    def get_today_menu(self, width) -> str:
+        return self.render_menu(self.week[datetime.datetime.now().weekday()], width)
 
-async def main():
-    olivka = Olivka()
-    await olivka.update()
-    pprint.pp(olivka.week)
+    @staticmethod
+    def render_menu(menu: list[MenuItem], width) -> str:
+        rendered = [f'+{" МЕНЮ ":=^{width - 2}}+']
+        for item in menu:
+            txt = item.name
+            if item.portion:
+                txt += f' [{item.portion}]'
+            for line in textwrap.wrap(txt, width - 4, initial_indent='• ', subsequent_indent='  '):
+                rendered.append(f'| {line:<{width - 4}} |')
+            rendered.append(f'+{"-" * (width - 2)}+')
 
-
-if __name__ == '__main__':
-    asyncio.run(main())
+        return '\n'.join(rendered)
