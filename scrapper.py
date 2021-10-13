@@ -53,7 +53,7 @@ class Olivka:
             txt = item.name
             if item.portion:
                 txt += f' [{item.portion}]'
-            for line in textwrap.wrap(txt, width - 4, initial_indent='• ', subsequent_indent='  '):
+            for line in textwrap.wrap(txt, width - 4):
                 rendered.append(f'| {line:<{width - 4}} |')
             rendered.append(f'+{"-" * (width - 2)}+')
 

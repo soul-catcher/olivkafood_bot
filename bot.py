@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dp.message_handler(commands={'get_menu'})
 async def get_menu(message: Message) -> None:
-    await message.answer(f'<pre>{ol.get_today_menu(40)}</pre>', parse_mode='HTML')
+    await message.answer(f'<pre>{ol.get_today_menu(20)}</pre>', parse_mode='HTML')
 
 
 async def on_startup(dp: Dispatcher) -> None:
