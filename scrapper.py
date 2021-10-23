@@ -1,10 +1,13 @@
 import datetime
+import logging
 import textwrap
 import time
 from dataclasses import dataclass
 
 import aiohttp
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 _OLIVKA_URL = 'https://m.olivkafood.ru/produkciya/bizneslanch/'
 
@@ -22,7 +25,7 @@ class Olivka:
         self.last_update: float | None = None
 
     async def update(self) -> None:
-        print("update")
+        logger.debug('updating schedule')
         async with aiohttp.ClientSession() as client:
             async with client.get(_OLIVKA_URL) as r:
                 self.week = self._parse_html(await r.text())
@@ -44,10 +47,16 @@ class Olivka:
         return week
 
     def get_today_menu(self, width) -> str:
-        return self.render_menu(self.week[datetime.datetime.now().weekday()], width)
+        try:
+            today_menu = self.week[datetime.datetime.now().weekday()]
+        except IndexError:
+            today_menu = []
+        return self.render_menu(today_menu, width)
 
     @staticmethod
     def render_menu(menu: list[MenuItem], width) -> str:
+        if not menu:
+            return 'Увы на сегодня ничего :('
         rendered = [f'+{" МЕНЮ ":=^{width - 2}}+']
         for item in menu:
             txt = item.name
