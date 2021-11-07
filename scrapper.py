@@ -1,13 +1,13 @@
 import datetime
-import logging
 import textwrap
 import time
 from dataclasses import dataclass
+from logging import getLogger
 
 import aiohttp
 from bs4 import BeautifulSoup
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 _OLIVKA_URL = 'https://m.olivkafood.ru/produkciya/bizneslanch/'
 
@@ -25,11 +25,11 @@ class Olivka:
         self.last_update: float | None = None
 
     async def update(self) -> None:
-        logger.debug('updating schedule')
         async with aiohttp.ClientSession() as client:
             async with client.get(_OLIVKA_URL) as r:
                 self.week = self._parse_html(await r.text())
                 self.last_update = time.time()
+        logger.debug('schedule updated')
 
     @staticmethod
     def _parse_html(html: str) -> list[list[MenuItem]]:

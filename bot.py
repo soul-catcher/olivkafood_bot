@@ -14,6 +14,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 ol = Olivka()
 scheduler = AsyncIOScheduler()
+scheduler.add_jobstore('sqlalchemy', url='sqlite:///db.sqlite')
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +41,20 @@ async def set_notifications_time(message: Message) -> None:
 # def set_notification_task(chat_id, time: str):
 #     scheduler.add_job(send_menu, )
 
+async def update_ol() -> None:
+    await ol.update()
+
 
 async def on_startup(dp: Dispatcher) -> None:
-    scheduler.add_job(ol.update, 'interval', hours=1, next_run_time=datetime.datetime.now())
+    scheduler.add_job(
+        update_ol, 'interval', hours=1, next_run_time=datetime.datetime.now(), id='update_job', replace_existing=True
+    )
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
     logger.setLevel(logging.DEBUG)
+    logging.getLogger('scrapper').setLevel("DEBUG")
+
     scheduler.start()
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
