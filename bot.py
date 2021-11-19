@@ -1,11 +1,9 @@
-#!/usr/bin/env python
 import datetime
 import logging
 import os
 
 from aiogram import Bot, Dispatcher, executor
 from aiogram.types import Message
-from apscheduler.job import Job
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -50,6 +48,36 @@ async def set_notifications_time(message: Message) -> None:
             CronTrigger.from_crontab(args),
             (message.chat.id, ),
             id=str(message.chat.id),
+            jobstore='sqlalchemy',
+            replace_existing=True
+        )
+        await message.answer(f"Время успешно установлено. В следующий раз уведомление придёт\n{job.next_run_time}")
+    except ValueError as e:
+        msg = f"Неверно задан формат. Ошибка:\n{e}"
+        logger.info(msg)
+        await message.answer(msg)
+
+
+async def send_message(chat_id: int, message: str) -> None:
+    await dp.bot.send_message(chat_id, message)
+
+
+@dp.message_handler(commands={'set_custom_notification'})
+async def set_custom_notification(message: Message) -> None:
+    logger.info(f'Получено сообщение {message.text}')
+    error_message = ('Задайте время в cron формате и сообщение.\nПример использования:\n'
+                     '/set_custom_notification 0 12 * * 1-5 Время обедать!')
+    alist = message.get_args().split()
+    if len(alist) < 6:
+        await message.answer(error_message)
+        return
+    cron, custom_message = ' '.join(alist[:5]), ' '.join(alist[5:])
+    try:
+        job = scheduler.add_job(
+            send_message,
+            CronTrigger.from_crontab(cron),
+            (message.chat.id, custom_message),
+            id="custom-message-" + str(message.chat.id),
             jobstore='sqlalchemy',
             replace_existing=True
         )
