@@ -4,9 +4,11 @@
 Бот предназначен для получения меню из кафе "Оливка".
 
 # Запуск
+Переменные окружения:
+`OLIVKA_TOKEN=<token>`
 ```shell
-$ python -m venv venv
-$ . venv/bin/activate
-$ pip install -r requirements.txt
-$ python bot
+python -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+python bot
 ```
