@@ -2,14 +2,14 @@ import datetime
 import logging
 import os
 
-from aiogram import Bot, Dispatcher, executor
+from aiogram import Bot, Dispatcher
 from aiogram.types import Message
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from scrapper import Olivka
+from .scrapper import Olivka
 
 TOKEN = os.environ['OLIVKA_TOKEN']
 bot = Bot(token=TOKEN)
@@ -21,11 +21,10 @@ jobstores = {
 }
 scheduler = AsyncIOScheduler(jobstores=jobstores)
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
-async def send_menu(chat_id: int):
-    await dp.bot.send_message(chat_id, f'<pre>{ol.get_today_menu(20)}</pre>', parse_mode='HTML')
+async def send_menu(chat_id: int) -> None:
+    await dp.bot.send_message(chat_id, f'<pre>{ol.get_today_menu("МЕНЮ", 20)}</pre>', parse_mode='HTML')
 
 
 @dp.message_handler(commands={'get_menu'})
@@ -51,9 +50,9 @@ async def set_notifications_time(message: Message) -> None:
             jobstore='sqlalchemy',
             replace_existing=True
         )
-        await message.answer(f"Время успешно установлено. В следующий раз уведомление придёт\n{job.next_run_time}")
+        await message.answer(f'Время успешно установлено. В следующий раз уведомление придёт\n{job.next_run_time}')
     except ValueError as e:
-        msg = f"Неверно задан формат. Ошибка:\n{e}"
+        msg = f'Неверно задан формат. Ошибка:\n{e}'
         logger.info(msg)
         await message.answer(msg)
 
@@ -77,25 +76,16 @@ async def set_custom_notification(message: Message) -> None:
             send_message,
             CronTrigger.from_crontab(cron),
             (message.chat.id, custom_message),
-            id="custom-message-" + str(message.chat.id),
+            id='custom-message-' + str(message.chat.id),
             jobstore='sqlalchemy',
             replace_existing=True
         )
-        await message.answer(f"Время успешно установлено. В следующий раз уведомление придёт\n{job.next_run_time}")
+        await message.answer(f'Время успешно установлено. В следующий раз уведомление придёт\n{job.next_run_time}')
     except ValueError as e:
-        msg = f"Неверно задан формат. Ошибка:\n{e}"
+        msg = f'Неверно задан формат. Ошибка:\n{e}'
         logger.info(msg)
         await message.answer(msg)
 
 
 async def on_startup(dp: Dispatcher) -> None:
     scheduler.add_job(ol.update, 'interval', hours=1, next_run_time=datetime.datetime.now())
-
-
-if __name__ == '__main__':
-    logging.basicConfig()
-    logger.setLevel(logging.DEBUG)
-    logging.getLogger('scrapper').setLevel("DEBUG")
-
-    scheduler.start()
-    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
