@@ -8,6 +8,7 @@ from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from aiohttp.client import ClientConnectionError
 
 from .scrapper import Olivka
 
@@ -29,13 +30,17 @@ async def send_menu(chat_id: int) -> None:
 
 @dp.message_handler(commands={'get_menu'})
 async def get_menu(message: Message) -> None:
-    logger.info(f'Получено сообщение {message.text}')
+    logger.info(
+        f'Получено сообщение из {message.chat.type} {message.chat.title or message.chat.username}: {message.text}'
+    )
     await send_menu(message.chat.id)
 
 
 @dp.message_handler(commands={'set_notifications_time'})
 async def set_notifications_time(message: Message) -> None:
-    logger.info(f'Получено сообщение {message.text}')
+    logger.info(
+        f'Получено сообщение из {message.chat.type} {message.chat.title or message.chat.username}: {message.text}'
+    )
     error_message = ('Задайте время в cron формате.\nПример использования:\n/set_notifications_time 0 10 * * 1-5\n'
                      'В таком случае уведомление будет приходить с понедельника по пятницу в 10 часов.')
     if not (args := message.get_args()):
@@ -63,7 +68,9 @@ async def send_message(chat_id: int, message: str) -> None:
 
 @dp.message_handler(commands={'set_custom_notification'})
 async def set_custom_notification(message: Message) -> None:
-    logger.info(f'Получено сообщение {message.text}')
+    logger.info(
+        f'Получено сообщение из {message.chat.type} {message.chat.title or message.chat.username}: {message.text}'
+    )
     error_message = ('Задайте время в cron формате и сообщение.\nПример использования:\n'
                      '/set_custom_notification 0 12 * * 1-5 Время обедать!')
     alist = message.get_args().split()
@@ -87,5 +94,9 @@ async def set_custom_notification(message: Message) -> None:
         await message.answer(msg)
 
 
-async def on_startup(dp: Dispatcher) -> None:
-    scheduler.add_job(ol.update, 'interval', hours=1, next_run_time=datetime.datetime.now())
+@scheduler.scheduled_job('interval', hours=1, next_run_time=datetime.datetime.now())
+async def updater():
+    try:
+        await ol.update()
+    except ClientConnectionError as e:
+        logger.warning(f'Menu not updated! Error "{e}"')
