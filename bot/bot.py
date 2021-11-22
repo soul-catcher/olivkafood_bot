@@ -41,7 +41,7 @@ async def set_notifications_time(message: Message) -> None:
     logger.info(
         f'Получено сообщение из {message.chat.type} {message.chat.title or message.chat.username}: {message.text}'
     )
-    error_message = ('Задайте время в cron формате.\nПример использования:\n/set_notifications_time 0 10 * * 1-5\n'
+    error_message = ('Задайте время в cron формате.\nПример использования:\n/set_notifications_time 0 10 * * mon-fri\n'
                      'В таком случае уведомление будет приходить с понедельника по пятницу в 10 часов.')
     if not (args := message.get_args()):
         await message.answer(error_message)
@@ -72,7 +72,7 @@ async def set_custom_notification(message: Message) -> None:
         f'Получено сообщение из {message.chat.type} {message.chat.title or message.chat.username}: {message.text}'
     )
     error_message = ('Задайте время в cron формате и сообщение.\nПример использования:\n'
-                     '/set_custom_notification 0 12 * * 1-5 Время обедать!')
+                     '/set_custom_notification 0 12 * * mon-fri Время обедать!')
     alist = message.get_args().split()
     if len(alist) < 6:
         await message.answer(error_message)
